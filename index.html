@@ -1,0 +1,930 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Roshini | Cyber Portfolio</title>
+/* === Cyber Attack Map Background === */
+:root {
+  --blue: rgba(0,150,255,0.9);
+  --blue-soft: rgba(0,150,255,0.2);
+}
+
+/* Fullscreen background canvas */
+#mapCanvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0; /* stay behind terminal and skill panels */
+}
+
+/* Optional glowing border frame */
+.frame {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(1100px, 92vw);
+  height: min(620px, 78vh);
+  border: 8px solid var(--blue);
+  border-radius: 14px;
+  box-shadow:
+    0 0 50px var(--blue-soft),
+    inset 0 0 40px rgba(0,120,255,0.15);
+  z-index: 1;
+ 
+}
+
+<style>
+  :root{
+    --bg:#04101a;
+    --text:#cfeee0;
+    --green:#4cff99;
+    --accent:#66d9ff;
+    --panel: rgba(0,6,10,0.6);
+    --red:#ff5b5b;
+    --yellow:#ffd166;
+  }
+  html,body{height:100%;margin:0;background:#000; font-family: "Courier New", monospace; color:var(--text); overflow:hidden}
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* NAV */
+  .nav{position:fixed;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:12px;z-index:70}
+  .btn{
+    background:rgba(0,0,0,0.6);
+    color:var(--text); padding:9px 14px; border-radius:10px; cursor:pointer; border:1px solid rgba(76,255,153,0.14);
+    box-shadow:0 6px 18px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.02);
+  }
+  .btn:hover{box-shadow:0 6px 28px rgba(0,0,0,0.6); border-color:rgba(76,255,153,0.26)}
+  .btn .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;border:2px solid rgba(76,255,153,0.28)}
+
+  /* MAP canvas wrapper */
+  #bgWrap {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+#bgWrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("./world-map-blue.jpg") center/cover no-repeat;
+  filter: brightness(0.35) contrast(1.1) saturate(0.9);
+  z-index: 0;
+}
+
+  #mapImg{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  /* subtle neon glow and brightness balance */
+  filter:
+    brightness(0.24)
+    contrast(1.15)
+    saturate(0.9)
+    drop-shadow(0 0 20px rgba(102,217,255,0.25))
+    drop-shadow(0 0 60px rgba(102,217,255,0.15))
+    drop-shadow(0 0 120px rgba(102,217,255,0.08));
+}
+/* Soft animated glow over map background */
+#bgWrap::after {
+  content: "";
+  position: absolute;
+  inset: -10%;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 40% at 70% 35%, rgba(102,217,255,0.22), transparent 60%),
+    radial-gradient(40% 30% at 30% 55%, rgba(255,95,95,0.12), transparent 70%),
+    radial-gradient(100% 60% at 50% 100%, rgba(0,0,0,0.55), transparent 60%);
+  filter: blur(18px);
+  mix-blend-mode: screen;
+  z-index: 0;
+  animation: aurora 12s ease-in-out infinite alternate;
+}
+
+@keyframes aurora {
+  0%   { transform: scale(1) translateY(0);     opacity: 0.9; }
+  50%  { transform: scale(1.03) translateY(-1%); opacity: 1; }
+  100% { transform: scale(1) translateY(0);     opacity: 0.9; }
+}
+
+  canvas{position:absolute;inset:0;z-index:1;pointer-events:none}
+
+  /* TERMINAL */
+  .terminal{
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:min(1100px,78vw); padding:22px;border:2px solid rgba(76,255,153,0.28);
+    background:linear-gradient(180deg,rgba(0,0,0,0.6),rgba(0,0,0,0.45));
+    border-radius:12px;box-shadow:0 0 36px rgba(76,255,153,0.06), inset 0 0 20px rgba(0,0,0,0.6);
+    z-index:40;
+  }
+  #output{white-space:pre-wrap;color:var(--green); text-shadow:0 0 8px rgba(76,255,153,0.06); font-size:18px; line-height:1.5}
+  .final-line{color:var(--red); text-shadow:0 0 14px rgba(255,91,91,0.2)}
+
+  /* SKILL MAP (right) EXACT SIZE: 4cm x 15cm */
+  .skill{
+    position:fixed; right:18px; top:90px; z-index:60;
+    width:5cm; height:17cm;
+    background:linear-gradient(180deg, rgba(0,8,14,0.86), rgba(0,8,14,0.72));
+    border-radius:10px; padding:12px; border:1px solid rgba(76,255,153,0.18);
+    box-shadow: 0 12px 34px rgba(0,0,0,0.6), inset 0 0 18px rgba(0,0,0,0.45); overflow:auto;
+  }
+  .skill h3{color:var(--red); margin:0 0 10px 0; font-family:inherit; letter-spacing:1px}
+  .skill ul{padding-left:18px; margin:0; color:#cfeee0}
+  .skill li{margin:8px 0}
+
+  /* ABOUT / BLOGS panels */
+  .panel{
+    position:fixed; inset:70px 20px 20px 20px; z-index:80; padding:18px; overflow:auto;
+    background:linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.72));
+    border-radius:12px; border:1px solid rgba(76,255,153,0.1); box-shadow:0 30px 60px rgba(0,0,0,0.6);
+  }
+  .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:18px}
+  .card{background:rgba(0,0,0,0.35); border-radius:10px; padding:14px; border:1px solid rgba(76,255,153,0.08)}
+  .card h4{color:var(--green); margin:0 0 8px}
+
+  /* BLOG LINKS styling */
+  .blogs h2{color:var(--accent); margin-top:0}
+  .blogs ul{margin:6px 0 14px 20px}
+  .blogs li{margin:6px 0}
+
+  /* DROPDOWNS */
+  .dropdown{position:fixed; top:52px; z-index:90; background:rgba(3,8,12,0.95); border:1px solid rgba(76,255,153,0.14); border-radius:10px; padding:10px 12px; box-shadow:0 24px 40px rgba(0,0,0,0.6)}
+  .drop-cert{left:calc(50% + 200px)}
+  .drop-contact{left:calc(50% + 320px)}
+  .drop-projects{left:calc(50% + 84px);} /* Or adjust 84px as needed for best alignment */
+  .contact-form input,.contact-form textarea{width:260px;background:#07121a;color:#e6fff2;border:1px solid rgba(76,255,153,0.12); border-radius:8px;padding:8px;font-family:inherit}
+  .contact-actions{margin-top:10px;display:flex;gap:8px}
+
+  /* hidden helper */
+  .hidden{display:none !important}
+
+  @media (max-width: 1000px){
+    .grid3{grid-template-columns:1fr}
+    .skill{display:none}
+    .drop-cert{left:auto; right:120px}
+    .drop-contact{left:auto; right:20px}
+    .terminal{width:90vw}
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="nav">
+  <button class="btn" id="homeBtn"><span class="dot" style="border-color:rgba(255,90,90,0.25);"></span>Home</button>
+  <button class="btn" id="aboutBtn"><span class="dot" style="border-color:rgba(76,255,153,0.25);"></span>About</button>
+  <button class="btn" id="blogsBtn"><span class="dot" style="border-color:rgba(102,217,255,0.25);"></span>Blogs</button>
+  <button class="btn" id="projectsBtn"><span class="dot" style="border-color:rgba(200,200,200,0.12);"></span>Projects</button>
+  <button class="btn" id="certBtn">Certifications ▾</button>
+  <button class="btn" id="contactBtn">Contact ▾</button>
+</div>
+
+<!-- Cyber Attack Map Background -->
+<canvas id="mapCanvas"></canvas>
+<div class="frame"></div>
+
+
+<!-- Background map + canvas -->
+<div id="bgWrap">
+    <img id="mapImg" src="world-map-blue.jpg" alt="world map background" />
+  <canvas id="arcCanvas"></canvas>
+  <canvas id="glowCanvas"></canvas>
+</div>
+
+<!-- Terminal -->
+<div class="terminal" id="terminal">
+  <div id="output" aria-live="polite" aria-atomic="false"></div>
+</div>
+
+<!-- Skill map -->
+<aside class="skill" id="skill">
+  <h2>SKILLSET MAP</h2>
+  <h3>Proficient Tools</h3>
+  <ul>
+    <li><b>Threat Monitoring:</b> QRadar, Splunk, Azure Sentinel, QROC, IBM Glass</li>
+    <li><b>OSINT:</b> Maltego, WHOIS, Ipvoid, VirusTotal, Sentinel Hub</li>
+    <li><b>Digital Forensics:</b> Autopsy, SleuthKit, CyberChef, Magnet AXIOM</li>
+    <li><b>Ethical Hacking:</b> Kali, Metasploit, Nessus, Burp, ZAP, SQLMap</li>
+    <li style="margin-top:8px"><i>still upgrading …</i></li>
+  </ul>
+</aside>
+
+<!-- ABOUT panel -->
+<section class="panel hidden" id="aboutPanel" aria-labelledby="aboutBtn">
+  <h2 style="color:var(--accent);margin-top:0">About – Professional Overview</h2>
+  <div class="grid3">
+    <div class="card">
+      <h4>Professional Experience</h4>
+      <p><b>IBM Bangalore, India — Cyber Security Analyst</b> (Jan 2022 – Mar 2024)</p>
+      <ul>
+        <li>Primary Incident Responder for 40+ enterprise clients in SOC.</li>
+        <li>Investigated 150+ incidents (malware, web threats, auth anomalies).</li>
+        <li>Reduced false positives by 20–30% via PCR rule optimizations.</li>
+        <li>Worked with QRadar, Azure Sentinel, Splunk, QROC, IBM Glass; handled critical escalations (&lt;20 min RT).</li>
+        <li>Provided mitigation guidance and coordinated rapid response with customer teams.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Coursework</h4>
+      <ul>
+        <li><b>Ethical Hacking (Jun 2025):</b> Kali, Metasploit, Nessus, ZAP, Nikto, SQLMap, Burp, Angry IP</li>
+        <li><b>Investigating Online Crime (Mar 2025):</b> Maltego, WHOIS, VirusTotal, OSINT Framework</li>
+        <li><b>Digital Forensics (Mar 2025):</b> Autopsy, SleuthKit, Magnet AXIOM; endpoint investigations</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Education</h4>
+      <p><b>University of Alabama at Birmingham</b> — MS in Cyber Security (GPA: 4.0)</p>
+      <p>Graduation: Dec 2025</p>
+      <ul>
+        <li>Academic student leader supporting incoming MS students.</li>
+        <li>Relevant: Cloud Security, Digital Forensics, MITRE-informed endpoint techniques.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- BLOGS panel -->
+<section class="panel blogs hidden" id="blogsPanel" aria-labelledby="blogsBtn">
+  <h2 style="margin-top:0">Medium Blogs &amp; CTF Writeups</h2>
+  <h3 style="color: var(--green); margin-top: 0;">My Medium ID | <a href="https://medium.com/@Commoness" target="_blank">https://medium.com/@Commoness</a></h3>
+  <h4>CTF Walkthroughs</h4>
+  <ul>
+    <li><a target="_blank" rel="noopener" href="https://medium.com/@Commoness/bitthebyte-eagle-linux-system-hacking-407da60893d4">Eagle Linux System</a></li>
+    <li><a target="_blank" rel="noopener" href="https://medium.com/@Commoness/academy-machine-hack-the-box-8914d373c5f7">Hack The Box — Academy Machine</a></li>
+  </ul>
+
+  <h4>TryHackMe Walkthroughs</h4>
+  <ul>
+    <li><a target="_blank" rel="noopener" href="https://medium.com/@Commoness/tryhackme-incident-response-and-forensics-voltaility-a1e4475a33af">Incident Response &amp; Volatility</a></li>
+    <li><a target="_blank" rel="noopener" href="https://medium.com/@Commoness/tryhackme-walkthrough-core-windows-processes-e585061d168d">Core Windows Processes</a></li>
+    <li><a target="_blank" rel="noopener" href="https://medium.com/@Commoness/blue-walkthrough-thm-b8933d74d294">Blue (THM)</a></li>
+  </ul>
+
+  <h4>PortSwigger Apprentice Walkthroughs</h4>
+  <ul>
+    <li><a target="_blank" rel="noopener" href="https://medium.com/@Commoness/portswigger-apprentice-lab-walkthrough-access-control-vulnerabilities-c22881196eca">Access Control Vulnerabilities</a></li>
+    <li><a target="_blank" rel="noopener" href="https://medium.com/@Commoness/portswigger-walkthrough-jwt-apprentice-bb795fee3181">JWT Apprentice</a></li>
+    <li><a target="_blank" rel="noopener" href="https://medium.com/@Commoness/portswigger-walkthrough-apprentice-761164bed221">Apprentice — Part 1</a></li>
+    <li><a target="_blank" rel="noopener" href="https://medium.com/@Commoness/portswigger-walkthrough-apprentice-01822536ae26">Apprentice — Part 2</a></li>
+  </ul>
+
+  <h4>Cybersecurity Knowledge &amp; Q&amp;A</h4>
+  <ul>
+    <li><a target="_blank" rel="noopener" href="https://medium.com/@Commoness/basic-networking-ports-fa675d63f10a">Basic Networking &amp; Ports</a></li>
+    <li><a target="_blank" rel="noopener" href="https://medium.com/@Commoness/most-used-linux-commands-6f36286c1af3">Most-used Linux Commands</a></li>
+    <li><a target="_blank" rel="noopener" href="https://medium.com/@Commoness/the-http-method-tells-the-server-what-action-the-user-wants-to-perform-on-the-resource-identified-ff5b8a9c0e3c">HTTP Methods</a> · <a target="_blank" rel="noopener" href="https://medium.com/@Commoness/important-http-response-code-b6bed030161b">Response Codes</a></li>
+    <li><a target="_blank" rel="noopener" href="https://medium.com/@Commoness/ports-used-for-backdoor-entry-in-ceh-b255bb2b94e9">Backdoor Ports (CEH)</a></li>
+    <li><a target="_blank" rel="noopener" href="https://medium.com/@Commoness/frequently-used-nmap-scanning-commands-5aa23e490806">Nmap Commands</a></li>
+    <li><a target="_blank" rel="noopener" href="https://medium.com/@Commoness/reconnaissance-acf7e7b53740">Reconnaissance</a></li>
+    <li><a target="_blank" rel="noopener" href="https://medium.com/@Commoness/osi-model-open-system-interconnection-and-tcp-ip-">OSI Model &amp; TCP/IP</a></li>
+    <li><a target="_blank" rel="noopener" href="https://medium.com/@Commoness/owasp-top-10-2021-in-short-5c66490dfd22transmission-control-protocol-internet-6752f104850f">OWASP Top 10 (short)</a></li>
+    <li><a target="_blank" rel="noopener" href="https://medium.com/@Commoness/architectures-of-qradar-splunk-and-sentinel-15f0e7ae4447">Architectures: QRadar, Splunk, Sentinel</a></li>
+    <li>
+      <a target="_blank" rel="noopener" href="https://medium.com/@Commoness/basic-interview-cyber-security-questions-part-1-0ca7a063fda6">Interview Qs Part 1</a> ·
+      <a target="_blank" rel="noopener" href="https://medium.com/@Commoness/cybersecurity-interview-questions-part-2-beb156173999">Part 2</a> ·
+      <a target="_blank" rel="noopener" href="https://medium.com/@Commoness/cyber-security-interview-questions-part-3-6dd5327b832c">Part 3</a> ·
+      <a target="_blank" rel="noopener" href="https://medium.com/@Commoness/cybersecurity-interview-question-part-4-527850d65892">Part 4</a>
+    </li>
+  </ul>
+</section>
+
+<!-- DROPDOWNS -->
+
+<div class="dropdown drop-cert hidden" id="certDrop">
+  <h4 style="color:var(--green);margin:0 0 8px 0">Certifications</h4>
+  <ul style="margin:0; padding-left:16px; color:var(--text)">
+    <li>CompTIA Security+</li>
+    <li>Texial Certified Ethical Hacking</li>
+    <li>Jr. Penetration Tester (TryHackMe)</li>
+    <li>Amazon Web Services (AWS)</li>
+    <button class="btn mini" id="closeCert">Close</button>
+  </ul>
+</div>
+
+<div class="dropdown drop-contact hidden" id="contactDrop" style="left: calc(50% + 320px);">
+  <h4 style="color:var(--green);margin:0 0 10px 0;">Contact</h4>
+  <form class="contact-form" id="contactForm" onsubmit="return false;" style="display:flex;flex-direction:column;gap:10px;width:280px;">
+    <label for="name">Name</label>
+    <input id="name" name="name" required pattern="[A-Za-z ]{2,60}" placeholder="Your name"/>
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" required placeholder="you@example.com"/>
+    <label for="subject">Subject</label>
+    <input id="subject" name="subject" required placeholder="Subject"/>
+    <label for="message">Message</label>
+    <textarea id="message" name="message" required placeholder="Your message"></textarea>
+    <div class="contact-actions" style="display:flex;gap:10px;margin-top:10px;">
+      <button class="btn mini" id="sendBtn">Send</button>
+      <button class="btn mini" id="closeContactBtn">Close</button>
+    </div>
+  </form>
+</div>
+
+<div class="dropdown drop-projects hidden" id="projectsDrop">
+  <h4 style="color:var(--green);margin:0 0 8px 0">Projects</h4>
+  <ul style="margin:0; padding-left:16px; color:var(--text)">
+    <li><a href="https://medium.com/@Commoness/keylogger-project-using-python-50680770c307" target="_blank">Keylogger project using Python</a></li>
+    <li><a href="https://medium.com/@Commoness/setting-up-tpot-honeypot-using-aws-ec2-instance-c7df1b0922bf" target="_blank">T-Pot Honeypot on AWS EC2</a></li>
+    <li><a href="https://medium.com/@Commoness/from-suspect-to-solver-the-digital-forensics-case-journey-19b8a6caae9c" target="_blank">Digital Forensics Case Journey</a></li>
+    <button class="btn mini" id="closeProjectsBtn">Close</button>
+  </ul>
+</div>
+<script>
+/* ===========================
+   Terminal typing + controls
+   =========================== */
+const LINES = [
+  "Initializing Roshini's Security Console...",
+  "Connected to IBM SOC Data Sources...",
+  "Analyzed 40+ enterprise incidents...",
+  "Optimized SIEM rules...",
+  "Worked on QRadar | Splunk | Azure Sentinel | IBM Glass | QROC...",
+  "Learnt OSINT, Digital Forensics, Investigated online crimes and scenario-based incidents as coursework in my Master’s at UAB.",
+  "",
+  "Open to work for roles like Security Penetration Tester and Incident Forensics Investigator."
+];
+
+const out = document.getElementById('output');
+let typing = true;
+let stopTyping = false;
+
+function typeAll(){
+  out.textContent = "";
+  let line=0;
+  const writeLine = () => {
+    if(stopTyping) return; // allow pause
+    if(line >= LINES.length) return;
+    const txt = LINES[line];
+    let i=0;
+    const span = document.createElement('span');
+    if(line===LINES.length-1) span.className='final-line';
+    out.appendChild(span);
+    const timer = setInterval(()=>{
+      if(stopTyping){ clearInterval(timer); return; }
+      span.textContent += txt.charAt(i++);
+      if(i>=txt.length){
+        clearInterval(timer);
+        out.appendChild(document.createTextNode("\n"));
+        line++;
+        setTimeout(writeLine, 420);
+      }
+    }, 22);
+  };
+  writeLine();
+}
+typeAll();
+
+/* ===========================
+   Canvas attack arcs system
+   =========================== */
+
+const arcCanvas = document.getElementById('arcCanvas');
+const glowCanvas = document.getElementById('glowCanvas');
+const mapImg = document.getElementById('mapImg');
+const dpr = Math.max(1, window.devicePixelRatio || 1);
+
+function resizeCanvases(){
+  const w = innerWidth;
+  const h = innerHeight;
+  [arcCanvas, glowCanvas].forEach(c=>{
+    c.width = Math.round(w * dpr);
+    c.height = Math.round(h * dpr);
+    c.style.width = w + 'px';
+    c.style.height = h + 'px';
+    const ctx = c.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  });
+}
+resizeCanvases();
+window.addEventListener('resize',()=>{
+  resizeCanvases();
+});
+
+/* utility: convert lat/lon to x,y on equirectangular (approx) */
+function latLonToXY(lat, lon, width, height){
+  // map image assumed equirectangular covering lon [-180,180], lat [-90,90]
+  const x = (lon + 180) * (width / 360);
+  const y = (90 - lat) * (height / 180);
+  return {x, y};
+}
+
+/* Attack objects */
+let attacks = [];
+const MAX_ATTACKS = 14;
+let animRunning = true;
+
+/* random coordinate generator across likely land areas (approx). For better accuracy you can supply geo points. */
+function randBetween(a,b){ return a + Math.random()*(b-a); }
+
+/* sample lat/lon clusters roughly over continents to make arcs look sensible */
+const continentSamples = [
+  {lat:37, lon:-95},  // USA central
+  {lat:51, lon:-0.5},  // UK
+  {lat:48, lon:2.3},   // France
+  {lat:28, lon:77},    // India
+  {lat:35, lon:103},   // China central
+  {lat:-23, lon:-46},  // Brazil (Sao Paulo)
+  {lat: -33, lon:151}, // Australia Sydney
+  {lat:55, lon:37},    // Russia (Moscow)
+  {lat:40, lon:-3},    // Spain
+  {lat:1, lon:103},    // Singapore
+];
+
+/* create random attack */
+function spawnAttack(){
+  const w = arcCanvas.width / dpr;
+  const h = arcCanvas.height / dpr;
+
+  // choose two random sample centers then add jitter
+  const aCenter = continentSamples[Math.floor(Math.random()*continentSamples.length)];
+  const bCenter = continentSamples[Math.floor(Math.random()*continentSamples.length)];
+  const latA = aCenter.lat + randBetween(-8,8);
+  const lonA = aCenter.lon + randBetween(-10,10);
+  const latB = bCenter.lat + randBetween(-8,8);
+  const lonB = bCenter.lon + randBetween(-10,10);
+
+  const pA = latLonToXY(latA, lonA, w, h);
+  const pB = latLonToXY(latB, lonB, w, h);
+
+  const color = Math.random() > 0.5 ? 'rgba(255,180,60,0.98)' : 'rgba(255,90,100,0.96)';
+  const widthLine = 1.6 + Math.random()*1.6;
+
+  const life = 6000 + Math.random()*9000; // ms
+
+  const midX = (pA.x + pB.x)/2 + randBetween(-160,160);
+  const midY = (pA.y + pB.y)/2 + randBetween(-80,80);
+
+  attacks.push({
+    from: pA, to: pB, color, widthLine, life,
+    start: performance.now(), mid:{x: midX, y: midY},
+    particleT: 0 // moving particle along curve
+  });
+
+  // keep attacks under max
+  if(attacks.length > MAX_ATTACKS) attacks.splice(0, attacks.length - MAX_ATTACKS);
+}
+
+/* draw bezier arcs + moving particle + soft glow */
+function draw(){
+  const ac = arcCanvas.getContext('2d');
+  const gc = glowCanvas.getContext('2d');
+  const w = arcCanvas.width / dpr;
+  const h = arcCanvas.height / dpr;
+
+  // clear
+  ac.clearRect(0,0,w,h);
+  gc.clearRect(0,0,w,h);
+
+  // faint base connector lines map-synced (very subtle)
+  ac.globalCompositeOperation = 'source-over';
+
+  const now = performance.now();
+  for(let i=0;i<attacks.length;i++){
+    const a = attacks[i];
+    const t = (now - a.start) / a.life;
+    const alpha = 1 - Math.min(1, t);
+    // path points
+    const p0 = a.from, p3 = a.to, p1 = a.mid, p2 = {x: (a.mid.x + p3.x)/2 + (p0.x - a.mid.x)*0.15, y:(a.mid.y + p3.y)/2 + (p0.y - a.mid.y)*0.08};
+    // draw arc (thin subtle dashed trail)
+    ac.lineWidth = a.widthLine;
+    ac.strokeStyle = a.color.replace(/rgba\(|\)/g,'').split(',').slice(0,3).join(',') + `,${0.12 * alpha}`;
+    ac.beginPath();
+    ac.moveTo(p0.x,p0.y);
+    // quadratic approximation using control mid
+    ac.quadraticCurveTo(p1.x,p1.y,p3.x,p3.y);
+    ac.stroke();
+
+    // glow layer (on glowCanvas)
+    gc.save();
+    gc.globalCompositeOperation = 'lighter';
+    const grd = gc.createLinearGradient(p0.x,p0.y,p3.x,p3.y);
+    grd.addColorStop(0, a.color);
+    grd.addColorStop(0.8, 'rgba(0,0,0,0)');
+    gc.strokeStyle = grd;
+    gc.lineWidth = a.widthLine*2.4;
+    gc.globalAlpha = 0.14 * alpha;
+    gc.beginPath();
+    gc.moveTo(p0.x,p0.y);
+    gc.quadraticCurveTo(p1.x,p1.y,p3.x,p3.y);
+    gc.stroke();
+    gc.restore();
+
+    // moving particle position along curve (ease)
+    const speedT = ((now - a.start) % 1800) / 1800; // looped
+    // Quadratic point at u
+    const u = speedT;
+    const cx = (1-u)*(1-u)*p0.x + 2*(1-u)*u*p1.x + u*u*p3.x;
+    const cy = (1-u)*(1-u)*p0.y + 2*(1-u)*u*p1.y + u*u*p3.y;
+
+    // particle glow
+    gc.save();
+    gc.globalCompositeOperation = 'lighter';
+    const r = 8 + a.widthLine*4;
+    const g = gc.createRadialGradient(cx,cy,0,cx,cy,r*2);
+    g.addColorStop(0, a.color);
+    g.addColorStop(0.2, a.color.replace('0.96','0.6'));
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    gc.fillStyle = g;
+    gc.globalAlpha = 0.95 * alpha;
+    gc.beginPath();
+    gc.arc(cx,cy,r,0,Math.PI*2);
+    gc.fill();
+    gc.restore();
+
+    // fade out ended attacks
+    if(t > 1.05){
+      attacks.splice(i,1);
+      i--;
+    }
+  }
+}
+
+/* animation loop */
+let lastSpawn = 0;
+function animate(){
+  if(!animRunning){ requestAnimationFrame(animate); return; } // if paused, keep loop but don't update visuals
+  const now = performance.now();
+  // spawn occasionally
+  if(now - lastSpawn > 700 && Math.random() < 0.6){
+    spawnAttack();
+    lastSpawn = now;
+  }
+  draw();
+  requestAnimationFrame(animate);
+}
+animate();
+
+/* Pause/resume controls (when panels open) */
+function pauseAll(){
+  animRunning = false;
+  stopTyping = true;
+}
+function resumeAll(){
+  animRunning = true;
+  // restart typing if user wants
+  if(stopTyping){
+    stopTyping = false;
+    typeAll();
+  }
+}
+
+/* ===========================
+   Button behavior & panels
+   =========================== */
+const terminalEl = document.getElementById('terminal');
+const skillEl = document.getElementById('skill');
+const aboutPanel = document.getElementById('aboutPanel');
+const blogsPanel = document.getElementById('blogsPanel');
+const certDrop = document.getElementById('certDrop');
+const contactDrop = document.getElementById('contactDrop');
+
+function showHome(){
+  aboutPanel.classList.add('hidden');
+  blogsPanel.classList.add('hidden');
+  certDrop.classList.add('hidden');
+  contactDrop.classList.add('hidden');
+  terminalEl.classList.remove('hidden');
+  skillEl.classList.remove('hidden');
+  resumeAll();
+}
+function showAbout(){
+  aboutPanel.classList.remove('hidden');
+  blogsPanel.classList.add('hidden');
+  terminalEl.classList.add('hidden');
+  skillEl.classList.add('hidden'); // hide skill when about open
+  certDrop.classList.add('hidden');
+  contactDrop.classList.add('hidden');
+  pauseAll();
+}
+function showBlogs(){
+  blogsPanel.classList.remove('hidden');
+  aboutPanel.classList.add('hidden');
+  terminalEl.classList.add('hidden');
+  skillEl.classList.add('hidden');
+  certDrop.classList.add('hidden');
+  contactDrop.classList.add('hidden');
+  pauseAll();
+}
+
+document.getElementById('homeBtn').onclick = showHome;
+document.getElementById('aboutBtn').onclick = showAbout;
+document.getElementById('blogsBtn').onclick = showBlogs;
+const projectsDrop = document.getElementById('projectsDrop');
+document.getElementById('projectsBtn').onclick = () => {
+  projectsDrop.classList.toggle('hidden');
+  certDrop.classList.add('hidden');
+  contactDrop.classList.add('hidden');
+};
+document.getElementById('closeProjectsBtn').onclick = () => {
+  projectsDrop.classList.add('hidden');
+};
+
+// Click outside to close Projects dropdown
+document.addEventListener('click', (e) => {
+  const target = e.target;
+  if (
+    !document.getElementById('projectsBtn').contains(target) &&
+    !projectsDrop.contains(target)
+  ) projectsDrop.classList.add('hidden');
+});
+
+
+document.getElementById('certBtn').onclick = () => {
+  certDrop.classList.toggle('hidden');
+  contactDrop.classList.add('hidden');
+};
+document.getElementById('contactBtn').onclick = () => {
+  contactDrop.classList.toggle('hidden');
+  certDrop.classList.add('hidden');
+};
+// Contact close button
+document.getElementById('closeContactBtn').onclick = () => contactDrop.classList.add('hidden');
+
+// Certifications close button
+document.getElementById('closeCert').onclick = () => certDrop.classList.add('hidden');
+
+
+/* click outside to close small dropdowns */
+document.addEventListener('click',(e)=>{
+  const target = e.target;
+  if(!document.getElementById('certBtn').contains(target) && !certDrop.contains(target)) certDrop.classList.add('hidden');
+  if(!document.getElementById('contactBtn').contains(target) && !contactDrop.contains(target)) contactDrop.classList.add('hidden');
+});
+
+/* contact form validation + mailto */
+/* contact form validation + mailto */
+document.getElementById('sendBtn').addEventListener('click', (e) => {
+  e.preventDefault();
+
+  const name   = document.getElementById('name').value.trim();
+  const email  = document.getElementById('email').value.trim();
+  const subj   = document.getElementById('subject').value.trim();
+  const msg    = document.getElementById('message').value.trim();
+
+  // email as you already had
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  // "same style" validation for name, subject, and message
+  const nameOk = /^[A-Za-z0-9 ]{2,50}$/.test(name);      // 2–50 chars
+  const subjOk = /^[A-Za-z0-9 ]{3,100}$/.test(subj);     // 3–100 chars
+  const msgOk  = /^[A-Za-z0-9 ]{10,1000}$/.test(msg);    // 10–1000 chars
+
+  if (!nameOk) {
+    alert('Name can only contain letters, numbers and spaces (min 2 characters)');
+    return;
+  }
+
+  if (!emailOk) {
+    alert('Please enter valid email');
+    return;
+  }
+
+  if (!subjOk) {
+    alert('Subject can only contain letters, numbers and spaces (min 3 characters)');
+    return;
+  }
+
+  if (!msgOk) {
+    alert('Message can only contain letters, numbers and spaces (min 10 characters)');
+    return;
+  }
+
+  const mailto = `mailto:roshinigowda1999@gmail.com?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(
+    "From: " + name + " <" + email + ">\n\n" + msg
+  )}`;
+
+  window.location.href = mailto;
+});
+
+/* prevent map image blank flash on load - scale canvas after image loaded */
+mapImg.addEventListener('load', ()=>{
+  resizeCanvases();
+});
+
+/* initialize a few starting attacks for visual */
+for(let i=0;i<6;i++){ setTimeout(spawnAttack, 200*i + Math.random()*1000); }
+
+</script>
+<script>
+(() => {
+  const c = document.getElementById('mapCanvas'),
+        x = c.getContext('2d', {alpha: true});
+  const DPR = window.devicePixelRatio || 1;
+  let W, H;
+
+  function resize() {
+    W = innerWidth;
+    H = innerHeight;
+    c.width = W * DPR;
+    c.height = H * DPR;
+    c.style.width = W + 'px';
+    c.style.height = H + 'px';
+    x.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  resize();
+  addEventListener('resize', resize, {passive: true});
+
+  const world = new Image();
+  world.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/World_map_-_low_resolution.svg/1600px-World_map_-_low_resolution.svg.png";
+
+  const pts = [
+    {n: "US", lat: 37.77, lon: -122.41},
+    {n: "Brazil", lat: -23.55, lon: -46.63},
+    {n: "UK", lat: 51.5, lon: -0.1},
+    {n: "Germany", lat: 52.5, lon: 13.4},
+    {n: "Russia", lat: 55.75, lon: 37.6},
+    {n: "India", lat: 12.97, lon: 77.59},
+    {n: "Singapore", lat: 1.35, lon: 103.8},
+    {n: "Japan", lat: 35.68, lon: 139.69},
+    {n: "Australia", lat: -33.86, lon: 151.21}
+  ];
+
+  const project = (lat, lon) => ({
+    x: ((lon + 180) / 360) * W,
+    y: ((90 - lat) / 180) * H
+  });
+
+  const attacks = [];
+  function spawn() {
+    const a = pts[Math.random() * pts.length | 0];
+    let b = pts[Math.random() * pts.length | 0];
+    while (a === b) b = pts[Math.random() * pts.length | 0];
+    attacks.push({
+      a, b,
+      t0: performance.now(),
+      life: 1200 + Math.random() * 1500,
+      col: Math.random() > 0.5 ? 'red' : 'yellow'
+    });
+  }
+
+  setInterval(spawn, 900);
+  for (let i = 0; i < 4; i++) setTimeout(spawn, i * 200);
+
+  function draw(t) {
+    x.clearRect(0, 0, W, H);
+    if (world.complete) x.drawImage(world, 0, 0, W, H);
+
+    for (let i = attacks.length - 1; i >= 0; i--) {
+      const k = attacks[i];
+      const p = (t - k.t0) / k.life;
+      if (p >= 1) { attacks.splice(i, 1); continue; }
+
+      const o = project(k.a.lat, k.a.lon),
+            e = project(k.b.lat, k.b.lon);
+      const cx = (o.x + e.x) / 2 + Math.sin(k.t0 / 800 + i) * W * 0.06,
+            cy = (o.y + e.y) / 2 - Math.cos(k.t0 / 900 + i) * H * 0.06;
+      const a = 0.3 + 0.7 * (1 - Math.abs(0.5 - p) * 2);
+
+      x.beginPath();
+      x.moveTo(o.x, o.y);
+      x.quadraticCurveTo(cx, cy, e.x, e.y);
+      x.strokeStyle = k.col === 'red'
+        ? `rgba(255,60,60,${a})`
+        : `rgba(255,220,90,${a})`;
+      x.lineWidth = 1 + 3 * (1 - Math.abs(0.5 - p) * 2);
+      x.shadowColor = x.strokeStyle;
+      x.shadowBlur = 10;
+      x.stroke();
+      x.shadowBlur = 0;
+
+      const one = 1 - p;
+      const px = one * one * o.x + 2 * one * p * cx + p * p * e.x;
+      const py = one * one * o.y + 2 * one * p * cy + p * p * e.y;
+      x.beginPath();
+      x.fillStyle = k.col === 'red'
+        ? 'rgba(255,90,90,1)'
+        : 'rgba(255,230,120,1)';
+      x.arc(px, py, 3 + 2 * (1 - Math.abs(0.5 - p) * 2), 0, 2 * Math.PI);
+      x.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+
+  requestAnimationFrame(draw);
+})();
+</script>
+<script>
+/* ------- tab visit tracker ------- */
+const visited = {
+  about: false,
+  blogs: false,
+  projects: false,
+  cert: false,
+  contact: false
+};
+function allVisited() {
+  return visited.about && visited.blogs && visited.projects && visited.cert && visited.contact;
+}
+
+document.getElementById('aboutBtn').addEventListener('click', () => visited.about = true);
+document.getElementById('blogsBtn').addEventListener('click', () => visited.blogs = true);
+document.getElementById('projectsBtn').addEventListener('click', () => visited.projects = true);
+document.getElementById('certBtn').addEventListener('click', () => visited.cert = true);
+document.getElementById('contactBtn').addEventListener('click', () => visited.contact = true);
+
+function showHomeTerminal() {
+  const terminal = document.getElementById('terminal');
+  if (!terminal) return;
+
+  const green = "color:#4cff99; font-family:'Courier New',monospace;";
+  const red   = "color:#ff4d4d; font-family:'Courier New',monospace;";
+
+  // run intro typing only once
+  if (!terminal.dataset.initialized) {
+    terminal.dataset.initialized = "true";
+    terminal.innerHTML = '';
+
+    const lines = [
+      "Initializing Roshini's Security Console...",
+      "Connected to IBM SOC Data Sources...",
+      "Analyzed 40+ enterprise incidents...",
+      "Optimized SIEM rules...",
+      "Worked on QRadar | Splunk | Azure Sentinel | IBM Glass | QROC...",
+      "Learnt OSINT, Digital Forensics, Investigated online crimes and scenario-based incidents as coursework in my Master’s at UAB.",
+      "",
+      "Open to work for roles like Security Penetration Tester and Incident Forensics Investigator."
+    ];
+
+    let i = 0;
+    function typeNext() {
+      if (i < lines.length) {
+        const line = document.createElement('div');
+        line.style = (i === lines.length - 1) ? red : green;
+        line.textContent = lines[i++];
+        terminal.appendChild(line);
+        setTimeout(typeNext, 500);
+      }
+    }
+    typeNext();
+  }
+
+  // when they return to Home, check if all tabs were visited
+  if (allVisited() && !terminal.dataset.reconShown) {
+    terminal.dataset.reconShown = "true";
+    askRecon(terminal, red);
+  }
+}
+
+function askRecon(termEl, redStyle) {
+  const prompt = document.createElement('div');
+  prompt.innerHTML = `<span style="${redStyle}">[+] Recon complete. Initiate TLS connection? (Y/n) _</span>`;
+  termEl.appendChild(prompt);
+  termEl.scrollIntoView({ behavior: "smooth" });
+  window.focus();
+
+  window.addEventListener('keydown', function handleKey(e) {
+    const key = e.key.toLowerCase();
+    if (key === 'y' || key === 'n') {
+      window.removeEventListener('keydown', handleKey);
+      const reply = document.createElement('div');
+      reply.style = redStyle;
+      reply.textContent = key;
+      termEl.appendChild(reply);
+      setTimeout(() => handleResponse(key, termEl, redStyle), 400);
+    }
+  });
+}
+function handleResponse(choice, termEl, redStyle) {
+  if (choice === 'y') {
+    const msg1 = document.createElement('div');
+    msg1.style = redStyle;
+
+    msg1.innerHTML = `
+      Let’s initiate TLS connection on LinkedIn profile:<br>
+      <a href="https://www.linkedin.com/in/roshini-m-lakshmana-b51ab3243/" 
+         target="_blank" 
+         rel="noopener noreferrer"
+         style="color:#66d9ff; text-decoration:underline;">
+        Open LinkedIn
+      </a>
+    `;
+
+    const msg2 = document.createElement('div');
+    msg2.style = redStyle;
+    msg2.textContent = "Session completed. Connection Initiated!";
+
+    termEl.appendChild(msg1);
+    termEl.appendChild(msg2);
+  } else {
+    const result = document.createElement('div');
+    result.style = redStyle;
+    result.textContent = "Session terminated, Thank you!";
+    termEl.appendChild(result);
+  }
+}
+
+/* trigger on Home click and on first load */
+document.getElementById('homeBtn').addEventListener('click', showHomeTerminal);
+window.addEventListener('load', showHomeTerminal);
+</script>
+
+</body>
+</html>
