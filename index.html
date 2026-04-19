@@ -125,13 +125,20 @@
   .final-line{color:var(--red); text-shadow:0 0 14px rgba(255,91,91,0.2)}
 
   /* SKILL MAP (right) EXACT SIZE: 4cm x 15cm */
-  .skill{
-    position:fixed; right:18px; top:90px; z-index:60;
-    width:5cm; height:17cm;
+ .skill{
+    position:absolute;
+    right:18px;
+    top:90px;
+    z-index:60;
+    width:5cm;
+    height:auto;
     background:linear-gradient(180deg, rgba(0,8,14,0.86), rgba(0,8,14,0.72));
-    border-radius:10px; padding:12px; border:1px solid rgba(76,255,153,0.18);
-    box-shadow: 0 12px 34px rgba(0,0,0,0.6), inset 0 0 18px rgba(0,0,0,0.45); overflow:auto;
-  }
+    border-radius:10px;
+    padding:12px;
+    border:1px solid rgba(76,255,153,0.18);
+    box-shadow: 0 12px 34px rgba(0,0,0,0.6), inset 0 0 18px rgba(0,0,0,0.45);
+    overflow:visible;
+}
   .skill h3{color:var(--red); margin:0 0 10px 0; font-family:inherit; letter-spacing:1px}
   .skill ul{padding-left:18px; margin:0; color:#cfeee0}
   .skill li{margin:8px 0}
@@ -205,7 +212,7 @@
   <h2>SKILLSET MAP</h2>
   <h3>Proficient Tools</h3>
   <ul>
-    <li><b>Threat Monitoring:</b> QRadar, Splunk, Azure Sentinel, QROC, IBM Glass,ServiceNow</li>
+    <li><b>Threat Monitoring:</b> QRadar, Splunk, Azure Sentinel, QROC, IBM Glass,ServiceNow,Wazuh,Shuffle SOAR</li>
     <li><b>OSINT:</b> Maltego, WHOIS, Ipvoid, VirusTotal, Sentinel Hub</li>
     <li><b>Digital Forensics:</b> Autopsy, SleuthKit, CyberChef, Magnet AXIOM</li>
     <li><b>Incident Response :</b> Voltaility, Zeek, Wireshark, PE studio , CFF Explorer Yara, XXD,Snort </li>
@@ -332,6 +339,8 @@
 <div class="dropdown drop-projects hidden" id="projectsDrop">
   <h4 style="color:var(--green);margin:0 0 8px 0">Projects</h4>
   <ul style="margin:0; padding-left:16px; color:var(--text)">
+    <li><a href="https://medium.com/@Commoness/securing-ci-cd-pipeline-project-part-1-6fe43901b30f " target="_blank">Secure CI/CD Pipeline with DevSecOps></a></li>
+    <li><a href="https://medium.com/@Commoness/soc-automation-lab-series-1-7119337c3a34 " target="_blank">SOC Automation: Threat Detection & Intelligence Using Wazuh and Shuffle></a></li>
     <li><a href="https://medium.com/@Commoness/cloud-project-secure-password-validation-otp-verification-using-aws-s3-lambda-dynamodb-ses-e77f5c35ff34" target="_blank">Secure Password Validation & OTP Verification Using AWS</a></li>
     <li><a href="https://medium.com/@Commoness/keylogger-project-using-python-50680770c307" target="_blank">Keylogger project using Python</a></li>
     <li><a href="https://medium.com/@Commoness/setting-up-tpot-honeypot-using-aws-ec2-instance-c7df1b0922bf" target="_blank">T-Pot Honeypot on AWS EC2</a></li>
